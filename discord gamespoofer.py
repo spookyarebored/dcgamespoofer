@@ -11,36 +11,28 @@ import ctypes
 import webbrowser
 import json
 
-# --- KONFIGURASI TEMA MODERN (Deep Dark / Cyberpunk Minimalist) ---
 THEME = {
-    "bg_main": "#121212",       # Hampir hitam
-    "bg_surface": "#1E1E1E",    # Abu gelap untuk card/input
-    "bg_popup": "#252525",      # Abu sedikit terang untuk dropdown
-    "primary": "#BB86FC",       # Ungu pastel (aksen modern)
-    "primary_dark": "#3700B3",  # Ungu gelap untuk hover
-    "secondary": "#00E676",     # Hijau terang (Online Status)
-    "secondary_dim": "#004D40", # Hijau gelap
-    "danger": "#CF6679",        # Merah soft
-    "danger_hover": "#B00020",  # Merah gelap
-    "blue": "#2979FF",          # Biru modern (Tombol Source)
-    "blue_hover": "#0055FF",    # Biru gelap hover
-    "text_main": "#E1E1E1",     # Putih tulang
-    "text_dim": "#B0B0B0",      # Abu muda
+    "bg_main": "#121212",     
+    "bg_surface": "#1E1E1E",
+    "bg_popup": "#252525",      
+    "primary": "#BB86FC",   
+    "primary_dark": "#3700B3",
+    "secondary": "#00E676",   
+    "secondary_dim": "#004D40",
+    "danger": "#CF6679",    
+    "danger_hover": "#B00020",
+    "blue": "#2979FF",       
+    "blue_hover": "#0055FF",
+    "text_main": "#E1E1E1",   
+    "text_dim": "#B0B0B0",
     "font_family": "Segoe UI"
 }
 
 HISTORY_FILE = "game_history.json"
 
-# --- FUNGSI DUMMY MODE (CHILD PROCESS) ---
 def run_dummy_mode():
-    """
-    Fungsi ini akan dijalankan oleh proses 'palsu' (file yang dicopy menjadi nama game).
-    Ini menggantikan logika '-c' script string yang lama agar kompatibel dengan PyInstaller.
-    """
     try:
-        # Kita buat window tkinter minimalis
         root = tk.Tk()
-        # Set judul sesuai nama file executable saat ini (misal: Valorant.exe)
         current_exe_name = os.path.basename(sys.executable)
         root.title(current_exe_name)
         root.geometry("300x100")
@@ -50,17 +42,14 @@ def run_dummy_mode():
         lbl = tk.Label(root, text=f"Game Simulator Running...\n({current_exe_name})", 
                        fg="#03DAC6", bg="#121212", font=("Segoe UI", 10))
         lbl.pack(expand=True)
-        
-        # Minimize window agar tidak mengganggu, tapi tetap ada di taskbar
-        # Gunakan after agar event loop jalan dulu baru minimize
+
         root.after(100, root.iconify)
         
-        # Bind close event agar proses benar-benar mati saat ditutup manual
+
         root.protocol("WM_DELETE_WINDOW", root.destroy)
         
         root.mainloop()
     except Exception as e:
-        # Jika terjadi error di background process, kita bisa log atau abaikan
         pass
 
 def hex_to_rgb(hex_val):
@@ -71,7 +60,6 @@ def rgb_to_hex(rgb_tuple):
     return '#{:02x}{:02x}{:02x}'.format(int(rgb_tuple[0]), int(rgb_tuple[1]), int(rgb_tuple[2]))
 
 def interpolate_color(start_hex, end_hex, t):
-    """Interpolasi linear antara dua warna untuk animasi smooth"""
     s_rgb = hex_to_rgb(start_hex)
     e_rgb = hex_to_rgb(end_hex)
     cur_rgb = (
@@ -82,7 +70,6 @@ def interpolate_color(start_hex, end_hex, t):
     return rgb_to_hex(cur_rgb)
 
 class SmoothButton(tk.Canvas):
-    """Tombol Custom dengan animasi hover yang fluid"""
     def __init__(self, master, text, command, width=200, height=45, bg_color=THEME["primary"], hover_color=THEME["primary_dark"], text_color="black"):
         super().__init__(master, width=width, height=height, bg=THEME["bg_main"], highlightthickness=0)
         self.command = command
@@ -111,7 +98,6 @@ class SmoothButton(tk.Canvas):
         self.config(cursor="hand2")
 
     def set_state(self, state):
-        """Mengatur status aktif/mati tombol secara visual dan fungsional"""
         self.animating = False
         
         if state == "disabled":
@@ -155,7 +141,6 @@ class SmoothButton(tk.Canvas):
             self.animating = False
             return
         
-        # Durasi animasi 200ms
         elapsed = (time.time() - self.anim_start_time) / 0.2
         if elapsed >= 1.0:
             elapsed = 1.0
@@ -173,34 +158,28 @@ class GameSimulatorApp:
         self.root.geometry("450x420")
         self.root.configure(bg=THEME["bg_main"])
         
-        # Fade In Effect variables
         self.alpha = 0.0
         self.root.attributes("-alpha", self.alpha)
         
-        # Frameless Logic
         self.root.overrideredirect(True)
         self.center_window()
         self.force_taskbar_appearance() 
 
-        # Drag Logic
         self.offset_x = 0
         self.offset_y = 0
 
-        # App Logic
         self.running_process = None
         self.temp_exe_name = "" 
         self.anim_job = None
         self.pulse_time = 0
-        self.history = self.load_history() # Load History
+        self.history = self.load_history()
         
-        # Input Variable untuk Real-time Tracking
         self.game_name_var = tk.StringVar()
         self.game_name_var.trace_add("write", self.update_button_states)
 
         self.setup_ui()
         self.fade_in_window()
         
-        # Set initial value based on history or default
         last_game = self.history[0] if self.history else "Valorant.exe"
         self.game_name_var.set(last_game)
         
@@ -209,7 +188,6 @@ class GameSimulatorApp:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def load_history(self):
-        """Memuat riwayat dari file JSON"""
         if os.path.exists(HISTORY_FILE):
             try:
                 with open(HISTORY_FILE, 'r') as f:
@@ -220,7 +198,6 @@ class GameSimulatorApp:
         return []
 
     def save_history(self):
-        """Menyimpan riwayat ke file JSON"""
         try:
             with open(HISTORY_FILE, 'w') as f:
                 json.dump(self.history, f)
@@ -228,12 +205,10 @@ class GameSimulatorApp:
             pass
 
     def add_to_history(self, game_name):
-        """Menambahkan game ke riwayat (Unik & FIFO)"""
         if game_name in self.history:
             self.history.remove(game_name)
         self.history.insert(0, game_name)
         
-        # Batasi riwayat hanya 5 item terakhir
         if len(self.history) > 5:
             self.history = self.history[:5]
         
@@ -270,7 +245,6 @@ class GameSimulatorApp:
             self.root.after(20, self.fade_in_window)
 
     def setup_ui(self):
-        # --- TITLE BAR ---
         title_bar = tk.Frame(self.root, bg=THEME["bg_main"], height=40)
         title_bar.pack(fill="x", side="top", pady=5)
         title_bar.bind("<ButtonPress-1>", self.start_move)
@@ -283,18 +257,15 @@ class GameSimulatorApp:
                              font=(THEME["font_family"], 10, "bold"))
         lbl_title.pack(side="left")
 
-        # Tombol Close
         btn_close = tk.Label(title_bar, text="✕", bg=THEME["bg_main"], fg=THEME["text_dim"], font=("Arial", 12))
         btn_close.pack(side="right", padx=15)
         btn_close.bind("<Button-1>", lambda e: self.on_close())
         btn_close.bind("<Enter>", lambda e: btn_close.config(fg=THEME["danger"]))
         btn_close.bind("<Leave>", lambda e: btn_close.config(fg=THEME["text_dim"]))
 
-        # --- MAIN CONTENT ---
         main_frame = tk.Frame(self.root, bg=THEME["bg_main"])
         main_frame.pack(fill="both", expand=True, padx=30, pady=5)
 
-        # --- STATUS AREA ---
         self.status_container = tk.Frame(main_frame, bg=THEME["bg_main"])
         self.status_container.pack(pady=(5, 15))
 
@@ -306,7 +277,6 @@ class GameSimulatorApp:
                                    font=(THEME["font_family"], 9, "bold"))
         self.lbl_status_text.pack(side="left")
 
-        # --- INPUT AREA ---
         self.input_container = tk.Frame(main_frame, bg=THEME["bg_main"])
         self.input_container.pack(fill="x", pady=10)
 
@@ -318,13 +288,11 @@ class GameSimulatorApp:
                                    fg="white", relief="flat", insertbackground="white")
         self.entry_name.pack(fill="x", ipady=5)
         
-        # BINDING UNTUK HISTORY
         self.entry_name.bind("<Button-1>", self.show_history_popup)
         self.entry_name.bind("<FocusIn>", self.show_history_popup)
         
         tk.Frame(self.input_container, bg=THEME["primary"], height=2).pack(fill="x")
 
-        # --- HISTORY LISTBOX (Hidden by default) ---
         self.history_frame = tk.Frame(self.root, bg=THEME["primary"]) # Frame tipis untuk border ungu
         self.history_listbox = tk.Listbox(self.history_frame, font=(THEME["font_family"], 11),
                                           bg=THEME["bg_popup"], fg=THEME["text_main"],
@@ -333,7 +301,6 @@ class GameSimulatorApp:
         self.history_listbox.pack(fill="both", expand=True, padx=1, pady=1)
         self.history_listbox.bind("<<ListboxSelect>>", self.on_history_select)
 
-        # --- ACTIONS AREA ---
         action_frame = tk.Frame(main_frame, bg=THEME["bg_main"])
         action_frame.pack(fill="x", pady=15)
 
@@ -347,35 +314,32 @@ class GameSimulatorApp:
         
         self.update_button_states()
 
-        # --- FOOTER (Source Code Button) ---
         footer_frame = tk.Frame(self.root, bg=THEME["bg_main"])
         footer_frame.pack(side="bottom", pady=25)
         
         self.btn_source = SmoothButton(footer_frame, text="SOURCE CODE", 
-                                       command=lambda: webbrowser.open("https://github.com/DEX-1101/discord-game-spoofer"),
+                                       command=lambda: webbrowser.open("https://github.com/spookyarebored/dcgamespoofer"),
                                        width=140, height=32, 
                                        bg_color=THEME["blue"], 
                                        hover_color=THEME["blue_hover"],
                                        text_color="white")
         self.btn_source.pack()
 
-    # --- HISTORY LOGIC ---
+
     def show_history_popup(self, event=None):
-        if not self.history: return # Jangan muncul jika kosong
+        if not self.history: return
         
-        # Reset listbox
+
         self.history_listbox.delete(0, tk.END)
         for item in self.history:
             self.history_listbox.insert(tk.END, item)
             
-        # Hitung posisi absolute entry
         x = self.entry_name.winfo_rootx() - self.root.winfo_rootx()
         y = self.entry_name.winfo_rooty() - self.root.winfo_rooty() + self.entry_name.winfo_height()
         w = self.entry_name.winfo_width()
         
-        # Tampilkan popup di atas UI lain (menggunakan place)
         self.history_frame.place(x=x, y=y, width=w)
-        self.history_frame.lift() # Pastikan paling atas
+        self.history_frame.lift()
 
     def hide_history_popup(self):
         self.history_frame.place_forget()
@@ -386,21 +350,17 @@ class GameSimulatorApp:
             data = self.history_listbox.get(selection[0])
             self.game_name_var.set(data)
             self.hide_history_popup()
-            self.root.focus() # Hilangkan fokus dari entry agar popup tidak muncul lagi seketika
+            self.root.focus()
 
     def on_root_click(self, event):
-        """Menutup popup jika klik di luar area entry atau listbox"""
         try:
             widget = event.widget
-            # Jika yang diklik bukan entry dan bukan bagian dari listbox
             if widget != self.entry_name and widget != self.history_listbox:
                 self.hide_history_popup()
         except:
             pass
 
-    # --- LOGIC UTAMA ---
     def update_button_states(self, *args):
-        # FIX: Sembunyikan history popup saat user mulai mengetik (trace triggered)
         self.hide_history_popup()
 
         input_text = self.game_name_var.get().strip()
@@ -410,7 +370,7 @@ class GameSimulatorApp:
             self.btn_start.set_state("disabled")
             self.btn_stop.set_state("normal")
             self.entry_name.config(state="disabled", disabledbackground=THEME["bg_main"], disabledforeground=THEME["secondary"])
-            self.hide_history_popup() # Sembunyikan jika game jalan
+            self.hide_history_popup()
         else:
             self.btn_stop.set_state("disabled")
             self.entry_name.config(state="normal", bg=THEME["bg_surface"], fg="white")
@@ -422,7 +382,7 @@ class GameSimulatorApp:
     def start_move(self, event):
         self.offset_x = event.x
         self.offset_y = event.y
-        self.hide_history_popup() # Tutup popup saat drag
+        self.hide_history_popup()
 
     def do_move(self, event):
         x = self.root.winfo_x() + event.x - self.offset_x
@@ -450,13 +410,11 @@ class GameSimulatorApp:
         if not filename_input: return
         if not filename_input.endswith(".exe"): filename_input += ".exe"
 
-        # Simpan ke history sebelum jalan
         self.add_to_history(filename_input)
 
         temp_dir = tempfile.gettempdir()
         target_path = os.path.join(temp_dir, filename_input)
 
-        # Hapus file lama jika ada
         if os.path.exists(target_path):
             try:
                 os.remove(target_path)
@@ -465,32 +423,18 @@ class GameSimulatorApp:
                 return
 
         try:
-            # COPY EXECUTABLE SAAT INI (Baik itu python.exe atau Aplikasi.exe)
             shutil.copy(sys.executable, target_path)
             self.temp_exe_name = target_path
-
-            # LOGIKA UNTUK MENJALANKAN DUMMY PROCESS
-            # Jika dijalankan sebagai EXE (frozen), kita tidak bisa pakai -c.
-            # Kita harus pakai argumen khusus --dummy-mode.
             
             if getattr(sys, 'frozen', False):
-                # MODE EXE (Compiled)
-                # Jalankan target_path dengan argumen --dummy-mode
                 cmd = [self.temp_exe_name, "--dummy-mode"]
             else:
-                # MODE SCRIPT (Development)
-                # Jika development, sys.executable adalah python.exe
-                # Kita harus menyertakan script ini sendiri
+
                 current_script = os.path.abspath(__file__)
                 cmd = [self.temp_exe_name, current_script, "--dummy-mode"]
             
-            # Jalankan tanpa creationflags khusus agar window behavior normal (biar child handle sendiri)
-            # Jika ingin menyembunyikan console di dev mode, bisa pakai flags, tapi untuk PyInstaller --windowed aman.
             creation_flags = 0
             if os.name == 'nt':
-                 # Opsional: Jika ingin benar-benar no window untuk process, tapi kita punya GUI di child
-                 # jadi biarkan default atau gunakan DETACHED_PROCESS jika perlu.
-                 # 0x08000000 = CREATE_NO_WINDOW
                  creation_flags = 0x08000000 
             
             self.running_process = subprocess.Popen(cmd, creationflags=creation_flags)
@@ -504,14 +448,9 @@ class GameSimulatorApp:
             self.cleanup()
 
     def stop_simulation(self):
-        # UPDATE: Gunakan TASKKILL untuk mematikan tree process secara paksa
-        # Ini mengatasi masalah pada PyInstaller one-file dimana child process (Python payload)
-        # tidak ikut mati saat terminate() dipanggil pada parent (Bootloader).
         if self.running_process:
             try:
                 if os.name == 'nt':
-                    # /F = Force, /T = Tree (Kill children), /PID = Process ID
-                    # Gunakan creationflags=0x08000000 untuk menyembunyikan console window taskkill
                     subprocess.call(
                         ["taskkill", "/F", "/T", "/PID", str(self.running_process.pid)],
                         stdout=subprocess.DEVNULL, 
@@ -521,7 +460,6 @@ class GameSimulatorApp:
                 else:
                     self.running_process.terminate()
             except Exception:
-                # Fallback jika taskkill gagal
                 try: self.running_process.terminate() 
                 except: pass
             
@@ -552,7 +490,6 @@ class GameSimulatorApp:
         self.root.destroy()
 
 if __name__ == "__main__":
-    # CEK ARGUMEN UNTUK MENENTUKAN MODE (MAIN APP atau DUMMY GAME)
     if "--dummy-mode" in sys.argv:
         run_dummy_mode()
     else:
