@@ -12,7 +12,7 @@ import webbrowser
 import json
 
 THEME = {
-    "bg_main": "#121213",     
+    "bg_main": "#121212",     
     "bg_surface": "#1E1E1E",
     "bg_popup": "#252525",      
     "primary": "#BB86FC",   
