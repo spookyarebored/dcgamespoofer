@@ -482,7 +482,7 @@ class GameSimulatorApp:
             try:
                 for _ in range(3):
                     try: os.remove(self.temp_exe_name); break
-                    except: time.sleep(0.5)
+                    except: time.sleep(0.6)
             except: pass
 
     def on_close(self):
